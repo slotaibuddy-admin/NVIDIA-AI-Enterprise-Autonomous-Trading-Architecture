@@ -1,0 +1,3 @@
+- "pull-request/**"
+# oder (wenn nur eine Ebene)
+- "pull-request/*"
