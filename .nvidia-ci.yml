@@ -238,8 +238,6 @@ push-images-to-staging:
     name: "${CNT_NGC_PUBLISH_IMAGE}"
     pull_policy: always
   variables:
-
-  variables:
     GITLAB_ACCESS_TOKEN: "${CNT_GITLAB_TOKEN}"
 
     IN_IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
