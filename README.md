@@ -36,7 +36,58 @@ The NVIDIA Container Toolkit enables running large language models like Meta's L
 
 ```sh
 # Set your NGC API key
-export NGC_API_KEY=<your-ngc-api-key>
+export NGC_API_KEY=<import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: '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',
+  baseURL: 'https://integrate.api.nvidia.com/v1',
+})
+ 
+async function main() {
+  const completion = await openai.chat.completions.create({
+    model: "meta/llama-3.3-70b-instruct",
+    messages: [{"role":"user","content":""}],
+    temperature: 0.2,
+    top_p: 0.7,
+    max_tokens: 1024,
+    stream: false
+  })
+   
+  process.stdout.write(completion.choices[0]?.message?.content);
+  
+}
+
+main();>
+
+authorization_header='Authorization: Bearer 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'
+accept_header='Accept: application/json'
+content_type_header='Content-Type: application/json'
+
+data=$'{
+  "model": "meta/llama-3.3-70b-instruct",
+  "messages": [
+    {
+      "role": "user",
+      "content": ""
+    }
+  ],
+  "temperature": 0.2,
+  "top_p": 0.7,
+  "frequency_penalty": 0,
+  "presence_penalty": 0,
+  "max_tokens": 1024,
+  "stream": false
+}'
+
+response=$(curl --silent -i -w "\n%{http_code}" --request POST \
+  --url "$invoke_url" \
+  --header "$authorization_header" \
+  --header "$accept_header" \
+  --header "$content_type_header" \
+  --data "$data"
+)
+
+echo "$response"
 export LOCAL_NIM_CACHE=~/.cache/nim
 mkdir -p "$LOCAL_NIM_CACHE"
 
