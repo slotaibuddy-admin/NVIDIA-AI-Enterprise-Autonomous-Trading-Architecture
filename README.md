@@ -23,6 +23,87 @@ For instructions on getting started with the NVIDIA Container Toolkit, refer to 
 
 The [user guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html) provides information on the configuration and command line options available when running GPU containers with Docker.
 
+### Running Large Language Models (LLMs)
+
+The NVIDIA Container Toolkit enables running large language models like Meta's Llama 3.1-70B using NVIDIA NIM (NVIDIA Inference Microservices). Below is an example using Docker:
+
+**Prerequisites:**
+- Multiple A100 (80GB) or H100 GPUs with at least 140GB total GPU memory
+- NVIDIA driver version 535 or later
+- NGC API key from [NVIDIA NGC](https://ngc.nvidia.com)
+
+**Example: Running Llama 3.1-70B**
+
+```sh
+# Set your NGC API key
+export NGC_API_KEY=<import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: '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',
+  baseURL: 'https://integrate.api.nvidia.com/v1',
+})
+ 
+async function main() {
+  const completion = await openai.chat.completions.create({
+    model: "meta/llama-3.3-70b-instruct",
+    messages: [{"role":"user","content":""}],
+    temperature: 0.2,
+    top_p: 0.7,
+    max_tokens: 1024,
+    stream: false
+  })
+   
+  process.stdout.write(completion.choices[0]?.message?.content);
+  
+}
+
+main();>
+
+authorization_header='Authorization: Bearer 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'
+accept_header='Accept: application/json'
+content_type_header='Content-Type: application/json'
+
+data=$'{
+  "model": "meta/llama-3.3-70b-instruct",
+  "messages": [
+    {
+      "role": "user",
+      "content": ""
+    }
+  ],
+  "temperature": 0.2,
+  "top_p": 0.7,
+  "frequency_penalty": 0,
+  "presence_penalty": 0,
+  "max_tokens": 1024,
+  "stream": false
+}'
+
+response=$(curl --silent -i -w "\n%{http_code}" --request POST \
+  --url "$invoke_url" \
+  --header "$authorization_header" \
+  --header "$accept_header" \
+  --header "$content_type_header" \
+  --data "$data"
+)
+
+echo "$response"
+export LOCAL_NIM_CACHE=~/.cache/nim
+mkdir -p "$LOCAL_NIM_CACHE"
+
+# Run Llama 3.1-70B using NVIDIA NIM
+docker run -it --rm \
+    --gpus all \
+    --shm-size=16GB \
+    -e NGC_API_KEY \
+    -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" \
+    -u $(id -u) \
+    -p 8000:8000 \
+    nvcr.io/nim/meta/llama-3.1-70b-instruct:latest
+```
+
+For more information on running LLMs with NVIDIA NIM, refer to the [NVIDIA NIM documentation](https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html).
+
 ## Issues and Contributing
 
 [Checkout the Contributing document!](CONTRIBUTING.md)
