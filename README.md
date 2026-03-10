@@ -23,6 +23,10 @@ For instructions on getting started with the NVIDIA Container Toolkit, refer to 
 
 The [user guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html) provides information on the configuration and command line options available when running GPU containers with Docker.
 
+## Additional Architecture Guides
+
+- [NFTflow container and agent layout](docs/nftflow-architecture.md)
+
 ## Issues and Contributing
 
 [Checkout the Contributing document!](CONTRIBUTING.md)
