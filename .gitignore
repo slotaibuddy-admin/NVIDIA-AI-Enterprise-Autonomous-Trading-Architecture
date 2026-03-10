@@ -9,3 +9,5 @@
 /release-*
 /bin
 /toolkit-test
+__pycache__/
+*.py[cod]

@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "nftbot-core"
+    static_configs:
+      - targets: ["nftbot-core:8000"]
+
+  - job_name: "agent-engine"
+    static_configs:
+      - targets: ["agent-engine:8001"]
+
+  - job_name: "flow-runner"
+    static_configs:
+      - targets: ["flow-runner:8002"]

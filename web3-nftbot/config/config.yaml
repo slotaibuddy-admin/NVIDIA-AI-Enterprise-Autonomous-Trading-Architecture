@@ -1,0 +1,106 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# NFTflow Configuration
+# NVIDIA AI Enterprise — Web3-NFTbot Stack
+#
+# Sensitive values (keys, passwords, tokens) MUST be supplied via environment
+# variables — never hard-coded here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─── Web3 / Blockchain ────────────────────────────────────────────────────────
+web3:
+  # RPC endpoint for Ethereum mainnet (override via WEB3_RPC_URL env var)
+  rpc_url: "${WEB3_RPC_URL}"
+  # Wallet address (public key only — private key via WALLET_PRIVATE_KEY env var)
+  wallet_address: "${WALLET_ADDRESS}"
+  # Gas strategy: "fast" | "standard" | "slow"
+  gas_strategy: "fast"
+  # Default marketplace for orders
+  default_marketplace: "opensea"
+  # Supported marketplaces
+  marketplaces:
+    - opensea
+    - blur
+    - looksrare
+    - x2y2
+
+# ─── Bots ─────────────────────────────────────────────────────────────────────
+bots:
+  # Collections the bots watch (add Ethereum contract addresses here)
+  watched_collections:
+    - "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d"  # Bored Ape Yacht Club
+    - "0x60e4d786628fea6478f785a6d7e704777c86a7c6"  # Mutant Ape Yacht Club
+    - "0x23581767a106ae21c074b2276d25e5c3e136a68b"  # Moonbirds
+
+  # Maximum percentage of portfolio value per single trade
+  max_trade_pct_portfolio: 0.05
+
+  # How often the NFTBot main loop polls for new opportunities (seconds)
+  poll_interval_seconds: 30
+
+  # ── SniperBot settings ────────────────────────────────────────────────────
+  sniper:
+    # Buy if listing is this % below floor price
+    floor_discount_pct: 0.05
+    # Buy if token rarity rank is within top X% of collection
+    rarity_top_pct: 0.10
+    # Never spend more than this per snipe
+    max_price_eth: 1.0
+    # How often SniperBot polls for new listings (seconds)
+    poll_interval_seconds: 5
+
+  # ── ArbitrageBot settings ─────────────────────────────────────────────────
+  arbitrage:
+    # Minimum net profit after gas fees to execute
+    min_profit_eth: 0.01
+    # Estimated gas cost per arbitrage pair (ETH)
+    gas_estimate_eth: 0.005
+    # Marketplaces to compare
+    marketplaces:
+      - opensea
+      - blur
+      - looksrare
+    # How often ArbitrageBot scans for opportunities (seconds)
+    poll_interval_seconds: 10
+
+# ─── AI Agents ────────────────────────────────────────────────────────────────
+agents:
+  # ── MarketAgent ────────────────────────────────────────────────────────────
+  market_model_path: "models/market_predictor.onnx"
+  # GPU device index (-1 = CPU, 0 = first GPU)
+  gpu_device: 0
+  # Inference batch size
+  batch_size: 32
+
+  # ── PortfolioAgent ─────────────────────────────────────────────────────────
+  # Trigger rebalance if any asset drifts more than this from its target weight
+  portfolio_drift_threshold: 0.10
+
+  # Target allocation weights (collection address → weight, must sum to ≤ 1.0)
+  target_weights:
+    "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d": 0.50
+    "0x60e4d786628fea6478f785a6d7e704777c86a7c6": 0.30
+    "0x23581767a106ae21c074b2276d25e5c3e136a68b": 0.20
+
+  # ── RiskAgent ──────────────────────────────────────────────────────────────
+  # Global stop-loss: close position if P&L drops below this percentage
+  stop_loss_pct: 0.20
+  # Global take-profit: close position if P&L rises above this percentage
+  take_profit_pct: 0.50
+
+# ─── NFTflow ──────────────────────────────────────────────────────────────────
+flow:
+  # Path to the workflow definition file
+  definition_path: "flow/nftflow.yaml"
+  # Maximum time (seconds) allowed per flow step before timeout
+  step_timeout_seconds: 60
+  # Number of times a failed step is retried before aborting
+  max_retries: 3
+
+# ─── Monitoring ───────────────────────────────────────────────────────────────
+monitoring:
+  # Prometheus metrics endpoint port
+  prometheus_port: 9090
+  # Log level: DEBUG | INFO | WARNING | ERROR
+  log_level: "INFO"
+  # Alert on Slack (set SLACK_WEBHOOK_URL env var to enable)
+  slack_webhook_url: "${SLACK_WEBHOOK_URL}"

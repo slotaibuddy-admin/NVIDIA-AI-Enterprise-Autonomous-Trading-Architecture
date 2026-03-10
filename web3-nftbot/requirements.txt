@@ -1,0 +1,16 @@
+# NFTflow — Python dependencies
+# Pin versions for reproducible builds.
+
+# Web3 / blockchain
+web3==6.15.1
+
+# AI / ML inference
+onnxruntime-gpu==1.17.1
+
+# Data & utilities
+pyyaml==6.0.1
+redis==5.0.3
+psycopg2-binary==2.9.9
+
+# Observability
+prometheus-client==0.20.0

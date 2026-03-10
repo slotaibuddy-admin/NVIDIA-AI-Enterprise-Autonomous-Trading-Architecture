@@ -1,0 +1,129 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# NFTflow — Workflow Definition
+# NVIDIA AI Enterprise — Web3-NFTbot Stack
+#
+# This file defines the ordered steps that constitute one complete trading
+# iteration.  The flow-runner service executes these steps sequentially,
+# passing data between them via a shared context object.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: NFTflow
+version: "1.0"
+description: >
+  End-to-end autonomous NFT trading workflow.
+  Discover → Analyse → Decide → Execute → Report
+
+# Global defaults (can be overridden per step)
+defaults:
+  timeout_seconds: 60
+  max_retries: 3
+  on_failure: "abort"   # "abort" | "skip" | "retry"
+
+steps:
+
+  # ── Step 1: DISCOVER ──────────────────────────────────────────────────────
+  - id: discover
+    name: "Discover Market Opportunities"
+    description: >
+      MarketAgent scans all watched NFT collections and fetches live
+      floor prices, volume, and new listings from configured marketplaces.
+    agent: MarketAgent
+    action: fetch_opportunities
+    outputs:
+      - opportunities          # list of candidate trades
+      - market_snapshot        # full market state for downstream steps
+    on_failure: "retry"
+
+  # ── Step 2: ANALYSE ───────────────────────────────────────────────────────
+  - id: analyse
+    name: "Analyse Opportunities (AI)"
+    description: >
+      MarketAgent runs GPU-accelerated inference on each opportunity and
+      assigns a buy/sell/hold signal with a confidence score.
+    agent: MarketAgent
+    action: score_opportunities
+    inputs:
+      - opportunities
+      - market_snapshot
+    outputs:
+      - scored_opportunities   # list with added signal + confidence fields
+    on_failure: "abort"
+
+  # ── Step 3: RISK CHECK ────────────────────────────────────────────────────
+  - id: risk_check
+    name: "Risk Assessment"
+    description: >
+      RiskAgent evaluates each scored opportunity, assigns a risk score
+      (1–10), and filters out trades that exceed the configured risk cutoff.
+      Approved trades also receive a recommended maximum position size.
+    agent: RiskAgent
+    action: filter_by_risk
+    inputs:
+      - scored_opportunities
+      - market_snapshot
+    outputs:
+      - approved_trades        # list of risk-approved trade opportunities
+    on_failure: "abort"
+
+  # ── Step 4: PORTFOLIO CHECK ───────────────────────────────────────────────
+  - id: portfolio_check
+    name: "Portfolio Management"
+    description: >
+      PortfolioAgent checks for any open positions that have hit a
+      stop-loss or take-profit target, and flags positions requiring
+      rebalancing.  Any resulting exit/rebalance orders are prepended
+      to the execution queue.
+    agent: PortfolioAgent
+    action: review_portfolio
+    inputs:
+      - market_snapshot
+    outputs:
+      - exit_orders            # positions to close immediately
+      - rebalance_orders       # positions to resize
+    on_failure: "skip"         # non-critical — continue even if this fails
+
+  # ── Step 5: DECIDE ────────────────────────────────────────────────────────
+  - id: decide
+    name: "Final Decision"
+    description: >
+      Merge approved_trades, exit_orders, and rebalance_orders into a
+      single prioritised execution queue.  Exit orders are always
+      executed first.
+    action: merge_orders
+    inputs:
+      - approved_trades
+      - exit_orders
+      - rebalance_orders
+    outputs:
+      - execution_queue        # ordered list of TradeOrder objects
+    on_failure: "abort"
+
+  # ── Step 6: EXECUTE ───────────────────────────────────────────────────────
+  - id: execute
+    name: "Execute Orders (Web3)"
+    description: >
+      NFTBot submits each order in the execution_queue as a signed Web3
+      transaction to the appropriate marketplace contract.
+    bot: NFTBot
+    action: execute_queue
+    inputs:
+      - execution_queue
+    outputs:
+      - execution_results      # list of {order, tx_hash, status}
+    timeout_seconds: 120
+    on_failure: "retry"
+
+  # ── Step 7: REPORT ────────────────────────────────────────────────────────
+  - id: report
+    name: "Report & Persist Results"
+    description: >
+      PortfolioAgent records all executed trades in the database, updates
+      current P&L, and emits Prometheus metrics.  Alert notifications are
+      sent for significant events (large gains/losses, failed transactions).
+    agent: PortfolioAgent
+    action: record_results
+    inputs:
+      - execution_results
+    outputs:
+      - pnl_summary            # updated portfolio summary
+    on_failure: "skip"
